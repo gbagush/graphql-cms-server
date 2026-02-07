@@ -17,6 +17,7 @@ import { authMiddleware } from "./middlewares/AuthMiddleware";
 import { CategoryResolver } from "./graphql/resolvers/CategoryResolver";
 import { TagResolver } from "./graphql/resolvers/TagResolver";
 import { PostResolver } from "./graphql/resolvers/PostResolver";
+import { UserResolver } from "./graphql/resolvers/UserResolver";
 
 async function main() {
   await AppDataSource.initialize();
@@ -39,6 +40,7 @@ async function main() {
       CategoryResolver,
       TagResolver,
       PostResolver,
+      UserResolver,
     ],
     authChecker,
   });
@@ -53,7 +55,7 @@ async function main() {
   app.use(
     "/graphql",
     cors(),
-    express.json(),
+    express.json({ limit: "10mb" }),
     expressMiddleware(server, {
       context: authMiddleware,
     }),

@@ -14,6 +14,7 @@ import {
 import { User } from "./User";
 import { Category } from "./Category";
 import { Tag } from "./Tag";
+import { GraphQLJSON } from "graphql-scalars";
 
 @ObjectType()
 @Entity("posts")
@@ -34,9 +35,9 @@ export class Post extends BaseEntity {
   @Column({ type: "text", nullable: true })
   excerpt?: string;
 
-  @Field()
-  @Column({ type: "text" })
-  content!: string;
+  @Field(() => GraphQLJSON)
+  @Column({ type: "json" })
+  content!: Record<string, any>;
 
   @Field(() => User)
   @ManyToOne(() => User, {
@@ -62,7 +63,7 @@ export class Post extends BaseEntity {
 
   @Field({ nullable: true })
   @Column({ type: "timestamp", nullable: true })
-  published_at?: Date;
+  published_at!: Date | null;
 
   @Field({ nullable: true })
   @DeleteDateColumn({ name: "deleted_at" })

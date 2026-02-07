@@ -45,6 +45,11 @@ export class PostResolver {
     return this.postService.getById(id);
   }
 
+  @Query(() => Post, { nullable: true })
+  async postBySlug(@Arg("slug") slug: string): Promise<Post | null> {
+    return this.postService.getBySlug(slug);
+  }
+
   @Authorized([UserRole.AUTHOR, UserRole.ADMIN, UserRole.SUPER_ADMIN])
   @Mutation(() => Post)
   async createPost(
@@ -53,6 +58,7 @@ export class PostResolver {
   ): Promise<Post> {
     return this.postService.create({
       ...input,
+      content: JSON.parse(input.content),
       authorId: ctx.user!.id,
     });
   }
@@ -65,7 +71,10 @@ export class PostResolver {
     @Ctx() ctx: Context,
   ): Promise<Post> {
     await this.postService.verifyAccess(id, ctx.user!);
-    return this.postService.update(id, input);
+    return this.postService.update(id, {
+      ...input,
+      content: input.content ? JSON.parse(input.content) : undefined,
+    });
   }
 
   @Authorized([UserRole.ADMIN, UserRole.SUPER_ADMIN])
@@ -90,5 +99,11 @@ export class PostResolver {
   @Mutation(() => Boolean)
   async restorePost(@Arg("id", () => ID) id: number): Promise<boolean> {
     return this.postService.restore(id);
+  }
+
+  @Authorized([UserRole.ADMIN, UserRole.SUPER_ADMIN])
+  @Mutation(() => Boolean)
+  async deletePost(@Arg("id", () => ID) id: number): Promise<boolean> {
+    return this.postService.deletePermanently(id);
   }
 }

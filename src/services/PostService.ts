@@ -12,7 +12,7 @@ import { TagService } from "./TagService";
 interface CreatePostPayload {
   title: string;
   slug: string;
-  content: string;
+  content: Record<string, any>;
   excerpt?: string;
   authorId: number;
   categoryId?: number | null;
@@ -22,7 +22,7 @@ interface CreatePostPayload {
 interface UpdatePostPayload {
   title?: string;
   slug?: string;
-  content?: string;
+  content?: Record<string, any>;
   excerpt?: string;
   categoryId?: number | null;
   tagIds?: number[];
@@ -89,6 +89,13 @@ export class PostService {
     return post;
   }
 
+  async getBySlug(slug: string): Promise<Post | null> {
+    return this.postRepository.findOne({
+      where: { slug },
+      relations: ["author", "category", "tags"],
+    });
+  }
+
   async create(payload: CreatePostPayload): Promise<Post> {
     const author = await this.userService.getById(payload.authorId);
 
@@ -129,8 +136,12 @@ export class PostService {
       }
     }
 
-    if (payload.tagIds) {
-      post.tags = await this.tagService.getByIds(payload.tagIds);
+    if (payload.tagIds !== undefined) {
+      if (payload.tagIds.length === 0) {
+        post.tags = [];
+      } else {
+        post.tags = await this.tagService.getByIds(payload.tagIds);
+      }
     }
 
     Object.assign(post, {
@@ -151,7 +162,7 @@ export class PostService {
 
   async unpublish(id: number): Promise<Post> {
     const post = await this.getById(id);
-    post.published_at = undefined;
+    post.published_at = null;
     return this.postRepository.save(post);
   }
 
@@ -162,6 +173,11 @@ export class PostService {
 
   async restore(id: number): Promise<boolean> {
     const result = await this.postRepository.restore(id);
+    return result.affected === 1;
+  }
+
+  async deletePermanently(id: number): Promise<boolean> {
+    const result = await this.postRepository.delete(id);
     return result.affected === 1;
   }
 

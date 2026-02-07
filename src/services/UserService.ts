@@ -10,6 +10,14 @@ interface CreateUserPayload {
   role: UserRole;
 }
 
+interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  avatarUrl?: string;
+}
+
 export class UserService {
   private userRepository = AppDataSource.getRepository(User);
 
@@ -17,7 +25,23 @@ export class UserService {
     return this.userRepository.count();
   }
 
+  async getAll(): Promise<User[]> {
+    return this.userRepository.find({
+      order: { createdAt: "DESC" },
+    });
+  }
+
   async create(payload: CreateUserPayload): Promise<User> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: payload.email },
+    });
+
+    if (existingUser) {
+      throw new GraphQLError("Email already exists", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+
     const hashedPassword = await hashPassword(payload.password);
 
     const user = this.userRepository.create({
@@ -42,6 +66,48 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async update(id: number, payload: UpdateUserPayload): Promise<User> {
+    const user = await this.getById(id);
+
+    if (payload.name !== undefined) {
+      user.name = payload.name;
+    }
+
+    if (payload.email !== undefined && payload.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: payload.email },
+      });
+
+      if (existingUser) {
+        throw new GraphQLError("Email already exists", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      user.email = payload.email;
+    }
+
+    if (payload.password !== undefined) {
+      user.password = await hashPassword(payload.password);
+    }
+
+    if (payload.role !== undefined) {
+      user.role = payload.role;
+    }
+
+    if (payload.avatarUrl !== undefined) {
+      user.avatarUrl = payload.avatarUrl;
+    }
+
+    return this.userRepository.save(user);
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const user = await this.getById(id);
+    await this.userRepository.remove(user);
+    return true;
   }
 
   async verifyUserCredential(email: string, password: string): Promise<User> {
