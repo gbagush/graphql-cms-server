@@ -39,6 +39,10 @@ export class Post extends BaseEntity {
   @Column({ type: "json" })
   content!: Record<string, any>;
 
+  @Field({ nullable: true })
+  @Column({ type: "varchar", length: 500, nullable: true })
+  banner_url?: string | null;
+
   @Field(() => User)
   @ManyToOne(() => User, {
     onDelete: "RESTRICT",

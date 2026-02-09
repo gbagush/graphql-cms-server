@@ -35,6 +35,9 @@ export class UpdatePostInput {
   @Field({ nullable: true })
   excerpt?: string;
 
+  @Field({ nullable: true })
+  banner_url?: string | null;
+
   @Field(() => ID, { nullable: true })
   categoryId?: number | null;
 

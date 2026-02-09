@@ -1,6 +1,6 @@
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { User, UserRole } from "../../entities/User";
-import { UserService } from "../../services/UserService";
+import { UserService } from "../../services/postgres/UserService";
 import { SetupSuperAdminInput } from "../inputs/SetupInput";
 import { GraphQLError } from "graphql/error";
 

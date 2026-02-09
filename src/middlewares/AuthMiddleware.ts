@@ -1,7 +1,7 @@
 import type { Request } from "express";
 import { verifyToken } from "../lib/jwt";
 import type { Context } from "../graphql/types/Context";
-import { UserService } from "../services/UserService";
+import { UserService } from "../services/postgres/UserService";
 
 const userService = new UserService();
 

@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql/error";
-import { AppDataSource } from "../lib/datasource";
-import { User, UserRole } from "../entities/User";
-import { comparePassword, hashPassword } from "../lib/password";
+import { AppDataSource } from "../../lib/datasource";
+import { User, UserRole } from "../../entities/User";
+import { comparePassword, hashPassword } from "../../lib/password";
 
 interface CreateUserPayload {
   name: string;

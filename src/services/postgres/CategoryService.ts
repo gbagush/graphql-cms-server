@@ -1,6 +1,8 @@
 import { GraphQLError } from "graphql/error";
-import { AppDataSource } from "../lib/datasource";
-import { Category } from "../entities/Category";
+import { IsNull } from "typeorm";
+import { AppDataSource } from "../../lib/datasource";
+import { Category } from "../../entities/Category";
+import { Post } from "../../entities/Post";
 
 interface CreateCategoryPayload {
   name: string;
@@ -31,6 +33,27 @@ export class CategoryService {
       where: { id },
       relations: ["parent", "children"],
     });
+  }
+
+  async getBySlug(slug: string): Promise<Category | null> {
+    return this.categoryRepository.findOne({
+      where: { slug },
+      relations: ["parent", "children"],
+    });
+  }
+
+  async getAllDescendantIds(categoryId: number): Promise<number[]> {
+    const ids: number[] = [categoryId];
+    const children = await this.categoryRepository.find({
+      where: { parent: { id: categoryId } },
+    });
+
+    for (const child of children) {
+      const descendantIds = await this.getAllDescendantIds(child.id);
+      ids.push(...descendantIds);
+    }
+
+    return ids;
   }
 
   async create(payload: CreateCategoryPayload): Promise<Category> {
@@ -99,5 +122,15 @@ export class CategoryService {
   async delete(id: number): Promise<boolean> {
     const result = await this.categoryRepository.delete(id);
     return result.affected === 1;
+  }
+
+  async getPostCountByCategoryId(categoryId: number): Promise<number> {
+    const postRepository = AppDataSource.getRepository(Post);
+    return postRepository.count({
+      where: {
+        category: { id: categoryId },
+        deleted_at: IsNull(),
+      },
+    });
   }
 }

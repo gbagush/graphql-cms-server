@@ -1,6 +1,7 @@
-import { In } from "typeorm";
-import { AppDataSource } from "../lib/datasource";
-import { Tag } from "../entities/Tag";
+import { In, IsNull } from "typeorm";
+import { AppDataSource } from "../../lib/datasource";
+import { Tag } from "../../entities/Tag";
+import { Post } from "../../entities/Post";
 
 interface CreateTagPayload {
   name: string;
@@ -26,6 +27,12 @@ export class TagService {
   async getById(id: number): Promise<Tag | null> {
     return this.tagRepository.findOne({
       where: { id },
+    });
+  }
+
+  async getBySlug(slug: string): Promise<Tag | null> {
+    return this.tagRepository.findOne({
+      where: { slug },
     });
   }
 
@@ -56,5 +63,15 @@ export class TagService {
   async delete(id: number): Promise<boolean> {
     const result = await this.tagRepository.delete(id);
     return result.affected === 1;
+  }
+
+  async getPostCountByTagId(tagId: number): Promise<number> {
+    const postRepository = AppDataSource.getRepository(Post);
+    return postRepository.count({
+      where: {
+        tags: { id: tagId },
+        deleted_at: IsNull(),
+      },
+    });
   }
 }

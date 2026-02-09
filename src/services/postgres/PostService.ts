@@ -1,9 +1,9 @@
 import { IsNull, Not } from "typeorm";
-import { AppDataSource } from "../lib/datasource";
-import { Post } from "../entities/Post";
-import { User, UserRole } from "../entities/User";
-import { Category } from "../entities/Category";
-import { Tag } from "../entities/Tag";
+import { AppDataSource } from "../../lib/datasource";
+import { Post } from "../../entities/Post";
+import { User, UserRole } from "../../entities/User";
+import { Category } from "../../entities/Category";
+import { Tag } from "../../entities/Tag";
 import { GraphQLError } from "graphql/error";
 import { UserService } from "./UserService";
 import { CategoryService } from "./CategoryService";
@@ -24,6 +24,7 @@ interface UpdatePostPayload {
   slug?: string;
   content?: Record<string, any>;
   excerpt?: string;
+  banner_url?: string | null;
   categoryId?: number | null;
   tagIds?: number[];
 }
@@ -43,15 +44,39 @@ export class PostService {
     });
   }
 
-  async getPublished(): Promise<Post[]> {
-    return this.postRepository.find({
-      relations: ["author", "category", "tags"],
-      where: {
-        published_at: Not(IsNull()),
-        deleted_at: IsNull(),
-      },
-      order: { published_at: "DESC" },
-    });
+  async getPublished(filters?: {
+    category?: string;
+    tag?: string;
+    keyword?: string;
+  }): Promise<Post[]> {
+    const qb = this.postRepository
+      .createQueryBuilder("post")
+      .leftJoinAndSelect("post.author", "author")
+      .leftJoinAndSelect("post.category", "category")
+      .leftJoinAndSelect("post.tags", "tags")
+      .where("post.published_at IS NOT NULL")
+      .andWhere("post.deleted_at IS NULL");
+
+    if (filters?.category) {
+      qb.andWhere("category.slug = :categorySlug", {
+        categorySlug: filters.category,
+      });
+    }
+
+    if (filters?.tag) {
+      qb.innerJoin("post.tags", "filterTag", "filterTag.slug = :tagSlug", {
+        tagSlug: filters.tag,
+      });
+    }
+
+    if (filters?.keyword) {
+      qb.andWhere(
+        "(post.title ILIKE :keyword OR post.excerpt ILIKE :keyword)",
+        { keyword: `%${filters.keyword}%` },
+      );
+    }
+
+    return qb.orderBy("post.published_at", "DESC").getMany();
   }
 
   async getDrafts(): Promise<Post[]> {
@@ -149,6 +174,8 @@ export class PostService {
       slug: payload.slug ?? post.slug,
       content: payload.content ?? post.content,
       excerpt: payload.excerpt ?? post.excerpt,
+      banner_url:
+        payload.banner_url !== undefined ? payload.banner_url : post.banner_url,
     });
 
     return this.postRepository.save(post);

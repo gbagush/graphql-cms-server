@@ -1,7 +1,7 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { LoginInput } from "../inputs/AuthInput";
 import { AuthPayload } from "../types/AuthPayload";
-import { UserService } from "../../services/UserService";
+import { UserService } from "../../services/postgres/UserService";
 import { signToken } from "../../lib/jwt";
 import type { Context } from "../types/Context";
 import { User, UserRole } from "../../entities/User";

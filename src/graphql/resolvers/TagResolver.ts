@@ -1,12 +1,26 @@
-import { Arg, Authorized, ID, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  FieldResolver,
+  ID,
+  Mutation,
+  Query,
+  Resolver,
+  Root,
+} from "type-graphql";
 import { Tag } from "../../entities/Tag";
-import { TagService } from "../../services/TagService";
+import { TagService } from "../../services/postgres/TagService";
 import { UserRole } from "../../entities/User";
 import { CreateTagInput, UpdateTagInput } from "../inputs/TagInput";
 
 @Resolver(() => Tag)
 export class TagResolver {
   private tagService = new TagService();
+
+  @FieldResolver(() => Number)
+  async postCount(@Root() tag: Tag): Promise<number> {
+    return this.tagService.getPostCountByTagId(tag.id);
+  }
 
   @Query(() => [Tag])
   async tags(): Promise<Tag[]> {
@@ -16,6 +30,11 @@ export class TagResolver {
   @Query(() => Tag, { nullable: true })
   async tag(@Arg("id", () => ID) id: number): Promise<Tag | null> {
     return this.tagService.getById(id);
+  }
+
+  @Query(() => Tag, { nullable: true })
+  async tagBySlug(@Arg("slug") slug: string): Promise<Tag | null> {
+    return this.tagService.getBySlug(slug);
   }
 
   @Authorized([UserRole.ADMIN, UserRole.SUPER_ADMIN])

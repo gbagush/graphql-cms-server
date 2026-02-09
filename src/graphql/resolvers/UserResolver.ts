@@ -9,7 +9,7 @@ import {
 } from "type-graphql";
 import { GraphQLError } from "graphql/error";
 import { User, UserRole } from "../../entities/User";
-import { UserService } from "../../services/UserService";
+import { UserService } from "../../services/postgres/UserService";
 import {
   CreateUserInput,
   UpdateUserInput,

@@ -34,4 +34,7 @@ export class Tag extends BaseEntity {
   @Field()
   @UpdateDateColumn({ name: "updated_at" })
   updated_at!: Date;
+
+  @Field(() => Number)
+  postCount!: number;
 }
